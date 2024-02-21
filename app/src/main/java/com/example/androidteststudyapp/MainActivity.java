@@ -1,13 +1,17 @@
 package com.example.androidteststudyapp;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.view.View;
 import android.view.Menu;
 
+import com.example.androidteststudyapp.RecyclerView.PersonDatabase;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.navigation.NavigationView;
 
 import androidx.navigation.NavController;
+import androidx.navigation.NavDestination;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
@@ -20,10 +24,13 @@ public class MainActivity extends AppCompatActivity {
 
     private AppBarConfiguration mAppBarConfiguration;
     private ActivityMainBinding binding;
+    NavController navController;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
 
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
@@ -32,8 +39,36 @@ public class MainActivity extends AppCompatActivity {
         binding.appBarMain.fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+                NavDestination currentFragment = navController.getCurrentDestination();
+
+                if (currentFragment.getId() == R.id.nav_people){
+                    Bundle extra = new Bundle();
+                    extra.putInt(CreateUpdateFragment.ACTION_TYPE,
+                            CreateUpdateFragment.CREATE);
+
+                    navController.navigate(R.id.createUpdateFragment, extra);
+                }
+            }
+        });
+        binding.appBarMain.fab.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View view) {
+                new AlertDialog.Builder(MainActivity.this)
+                        .setTitle("Delete")
+                        .setMessage("Are you sure you want to delete all famous people?")
+                        .setIcon(android.R.drawable.ic_dialog_alert)
+                        .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                                PersonDatabase db = new PersonDatabase(MainActivity.this);
+                                db.deleteAllPeople();
+                                db.close();
+                                navController.navigate(R.id.nav_people);
+                            }
+                        })
+                        .setNegativeButton("No", null)
+                        .show();
+                return false;
             }
         });
         DrawerLayout drawer = binding.drawerLayout;
@@ -44,7 +79,7 @@ public class MainActivity extends AppCompatActivity {
                 R.id.nav_home, R.id.nav_people, R.id.nav_credits)
                 .setOpenableLayout(drawer)
                 .build();
-        NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
+        navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
         NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
         NavigationUI.setupWithNavController(navigationView, navController);
     }
